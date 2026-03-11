@@ -4,7 +4,7 @@ SAAS-ready, AI-assisted vehicle valuation and instant offer engine for high-volu
 
 ---
 
-### Product Spec (Portfolio-Ready)
+### Product Spec
 
 This project is intentionally designed to be **demo-friendly** and **client-ready**, with clear boundaries around paid integrations and realistic behavior:
 
