@@ -8,7 +8,7 @@ import logging
 from app.models.partner import Partner
 from app.models.pricing import PricingRule
 from app.models.vehicle import Vehicle
-from app.schemas.quote import QuoteRequest, QuoteResult
+from app.schemas.quote import QuoteRequest
 
 logger = logging.getLogger(__name__)
 
