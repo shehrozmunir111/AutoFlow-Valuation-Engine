@@ -5,7 +5,10 @@ interface ProgressBarProps {
 }
 
 const ProgressBar = ({ current, total, labels }: ProgressBarProps) => {
-    const progress = ((current + 1) / total) * 100
+    const progress =
+        total > 1
+            ? (current / (total - 1)) * 100
+            : 0
 
     return (
         <div className="w-full">

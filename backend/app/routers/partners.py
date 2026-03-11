@@ -46,7 +46,7 @@ async def add_pricing_rule(
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
     
-    db_rule = PricingRule(**rule.model_dump(), partner_id=partner_id)
+    db_rule = PricingRule(**rule.model_dump(exclude={"partner_id"}), partner_id=partner_id)
     db.add(db_rule)
     db.commit()
     db.refresh(db_rule)

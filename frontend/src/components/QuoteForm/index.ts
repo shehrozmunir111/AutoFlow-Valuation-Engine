@@ -1,3 +1,4 @@
+export { default } from './index.tsx'
 export { default as VehicleInfoStep } from './VehicleInfoStep'
 export { default as VINConfirmStep } from './VINConfirmStep'
 export { default as ConditionStep } from './ConditionStep'

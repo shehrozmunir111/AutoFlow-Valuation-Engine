@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
+import uuid
 
 from app.database import get_db
 from app.schemas.photo import PhotoUploadRequest
@@ -13,12 +14,16 @@ async def get_upload_url(
     request: PhotoUploadRequest,
     db: Session = Depends(get_db)
 ):
-    quote = db.query(Quote).filter(Quote.quote_id == request.quote_id).first()
+    try:
+        quote_uuid = uuid.UUID(request.quote_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid quote_id format")
+        
+    quote = db.query(Quote).filter(Quote.quote_id == quote_uuid).first()
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     
     # Mock presigned URL
-    import uuid
     key = f"quotes/{request.quote_id}/{request.photo_type}_{uuid.uuid4()}.jpg"
     
     return {
@@ -34,7 +39,12 @@ async def confirm_upload(
     s3_key: str,
     db: Session = Depends(get_db)
 ):
-    quote = db.query(Quote).filter(Quote.quote_id == quote_id).first()
+    try:
+        quote_uuid = uuid.UUID(quote_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid quote_id format")
+        
+    quote = db.query(Quote).filter(Quote.quote_id == quote_uuid).first()
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     

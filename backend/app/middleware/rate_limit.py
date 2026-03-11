@@ -11,7 +11,7 @@ class RateLimiter:
         self.requests = {}  # IP -> list of timestamps
     
     async def check_rate_limit(self, request: Request):
-        client_ip = request.client.host
+        client_ip = request.client.host if request.client else "127.0.0.1"
         now = time.time()
         
         # Purani entries hatao

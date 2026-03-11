@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Boolean, Text, DateTime, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, Boolean, Text, DateTime, JSON, Uuid
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -10,7 +9,7 @@ class Quote(Base, TimestampMixin):
     __tablename__ = "quotes"
     
     id = Column(Integer, primary_key=True, index=True)
-    quote_id = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, index=True)
+    quote_id = Column(Uuid(as_uuid=True), default=uuid.uuid4, unique=True, index=True)
     
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
     vin = Column(String(17), index=True)
@@ -48,6 +47,7 @@ class Quote(Base, TimestampMixin):
     zoho_sync_status = Column(String(20), default='pending')
     
     accepted_at = Column(DateTime)
+    offer_valid_until = Column(DateTime)
     
     vehicle_ref = relationship("Vehicle", back_populates="quotes")
     partner_ref = relationship("Partner", back_populates="quotes")
