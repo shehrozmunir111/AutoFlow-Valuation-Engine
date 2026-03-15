@@ -20,8 +20,8 @@ class QuoteRequest(BaseModel):
     drivable: bool
     engine_issues: Optional[str] = None
     transmission_issues: Optional[str] = None
-    exterior_damage: Optional[List[DamageSelection]] = None
-    interior_damage: Optional[List[DamageSelection]] = None
+    condition_map_ext: Optional[List[DamageSelection]] = None
+    condition_map_int: Optional[List[DamageSelection]] = None
     zip_code: str = Field(..., min_length=5, max_length=10)
     city: Optional[str] = None
     state: Optional[str] = None

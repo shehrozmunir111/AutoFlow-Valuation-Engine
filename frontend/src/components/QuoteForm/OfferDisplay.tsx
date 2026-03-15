@@ -37,7 +37,7 @@ const OfferDisplay = ({ quote, onReset }: OfferDisplayProps) => {
                                 {formatCurrency(quote.offer_amount)}
                             </div>
                             <p className="text-gray-500">
-                                Classification: {quote.classification} ({Math.round(quote.confidence * 100)}% confidence)
+                                Valuation Category: {quote.classification} ({Math.round(quote.confidence * 100)}% confidence)
                             </p>
                         </div>
 

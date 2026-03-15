@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.schemas.quote import QuoteRequest, QuoteResponse
-from app.services.pricing_engine import PricingEngine
-from app.services.ai_classifier import AIClassifier
+from app.services.valuation_logic import ValuationLogic
+from app.services.smart_assessor import SmartAssessor
 from app.models.quote import Quote
 
 router = APIRouter()
@@ -16,13 +16,13 @@ async def calculate_quote(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    # 1. AI Classification
-    classifier = AIClassifier()
-    classification = await classifier.classify_vehicle(request)
+    # 1. AI Assessment
+    assessor = SmartAssessor()
+    classification = await assessor.assess_vehicle_category(request)
     
-    # 2. Pricing Engine
-    engine = PricingEngine(db)
-    pricing = engine.find_best_price(request)
+    # 2. Valuation Logic
+    logic = ValuationLogic(db)
+    pricing = logic.calculate_optimal_price(request)
     
     # 3. Create quote
     quote = Quote(
@@ -39,6 +39,8 @@ async def calculate_quote(
         spread_amount=pricing['spread_amount'],
         final_offer=pricing['final_offer'],
         offer_valid_until=datetime.now() + timedelta(hours=24),
+        condition_map_ext=[d.model_dump() for d in request.condition_map_ext] if request.condition_map_ext else None,
+        condition_map_int=[d.model_dump() for d in request.condition_map_int] if request.condition_map_int else None,
         ai_classified=True,
         needs_human_review=classification['confidence'] < 0.7
     )

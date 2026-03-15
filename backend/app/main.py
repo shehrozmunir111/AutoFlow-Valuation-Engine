@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="AutoFlow Valuation Engine",
+    title="SwiftValuation AI",
     version="1.0.0",
     lifespan=lifespan
 )

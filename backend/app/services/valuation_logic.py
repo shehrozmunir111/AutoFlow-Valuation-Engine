@@ -12,11 +12,11 @@ from app.schemas.quote import QuoteRequest
 
 logger = logging.getLogger(__name__)
 
-class PricingEngine:
+class ValuationLogic:
     def __init__(self, db: Session):
         self.db = db
     
-    def find_best_price(self, request: QuoteRequest) -> Dict[str, Any]:
+    def calculate_optimal_price(self, request: QuoteRequest) -> Dict[str, Any]:
         start_time = time.time()
         
         # 1. Get eligible partners
@@ -50,13 +50,14 @@ class PricingEngine:
     def _get_eligible_partners(self, zip_code: str, classification_hint: Optional[str]) -> List[Partner]:
         query = self.db.query(Partner).filter(Partner.is_active == True)
         
+        from sqlalchemy import cast, String
+        
         # Geographic filter
         query = query.filter(
             or_(
                 Partner.coverage_zips.is_(None),
-                Partner.coverage_zips == [],
-                Partner.coverage_zips.contains([zip_code]),
-                Partner.coverage_zips.contains([zip_code[:3]])
+                cast(Partner.coverage_zips, String).ilike(f'%"{zip_code}"%'),
+                cast(Partner.coverage_zips, String).ilike(f'%"{zip_code[:3]}"%')
             )
         )
         

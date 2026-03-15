@@ -24,8 +24,8 @@ class Quote(Base, TimestampMixin):
     drivable = Column(Boolean)
     engine_issues = Column(Text)
     transmission_issues = Column(Text)
-    exterior_damage = Column(JSON)
-    interior_damage = Column(JSON)
+    condition_map_ext = Column(JSON)
+    condition_map_int = Column(JSON)
     
     zip_code = Column(String(10), index=True)
     city = Column(String(100))

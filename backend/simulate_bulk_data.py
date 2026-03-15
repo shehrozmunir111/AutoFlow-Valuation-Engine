@@ -118,7 +118,7 @@ def main():
             db.bulk_insert_mappings(PricingRule, pricing_rules_chunk)
             db.commit()
             
-        print("\nFinished generating all bulk data! You can now test the pricing engine performance.")
+        print("\nFinished generating all bulk data! You can now test the valuation logic performance.")
 
 if __name__ == "__main__":
     main()

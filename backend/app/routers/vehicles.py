@@ -8,6 +8,8 @@ from app.schemas.vehicle import VehicleCreate, VehicleResponse
 
 router = APIRouter()
 
+from app.services.auto_spec_fetcher import AutoSpecFetcher
+
 @router.get("/lookup")
 async def lookup_vehicle(
     vin: Optional[str] = Query(None, min_length=17, max_length=17),
@@ -17,15 +19,15 @@ async def lookup_vehicle(
     db: Session = Depends(get_db)
 ):
     if vin:
-        # Mock VIN decoder response
-        return {
-            "source": "vin_decoder",
-            "vin": vin,
-            "year": 2019,
-            "make": "Toyota",
-            "model": "Camry",
-            "trim": "LE"
-        }
+        fetcher = AutoSpecFetcher()
+        data = await fetcher.fetch_specs_by_vin(vin)
+        if data:
+            return {
+                "source": "vin_decoder",
+                "vin": vin,
+                **data
+            }
+        raise HTTPException(status_code=404, detail="VIN not found")
     
     if year and make and model:
         vehicles = db.query(Vehicle).filter(

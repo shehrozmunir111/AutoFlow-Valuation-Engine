@@ -8,7 +8,7 @@ from app.models.quote import Quote
 
 logger = logging.getLogger(__name__)
 
-class ZohoCRMClient:
+class CRMIntegration:
     def __init__(self):
         self.access_token: Optional[str] = None
         self.token_expires: Optional[datetime] = None
@@ -35,7 +35,7 @@ class ZohoCRMClient:
             self.token_expires = datetime.now() + timedelta(seconds=data.get('expires_in', 3600) - 300)
             return self.access_token
     
-    async def create_car_record(self, quote: Quote) -> Dict:
+    async def publish_quote_record(self, quote: Quote) -> Dict:
         """Create Cars module record in Zoho CRM."""
         if settings.MOCK_MODE or settings.ZOHO_MOCK_MODE:
             return {"success": True, "zoho_id": "mock_zoho_id"}

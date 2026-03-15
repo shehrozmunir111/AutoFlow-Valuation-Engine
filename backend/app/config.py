@@ -4,11 +4,11 @@ from typing import List
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "AutoFlow Valuation Engine"
+    APP_NAME: str = "SwiftValuation AI"
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:admin@localhost:5432/autoflow_db"
+    DATABASE_URL: str = "postgresql://postgres:admin@localhost:5432/swiftval_db"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 30
     
@@ -23,9 +23,10 @@ class Settings(BaseSettings):
     MOCK_MODE: bool = False
     ZOHO_MOCK_MODE: bool = False
     
-    # APIs - Claude
-    CLAUDE_API_KEY: str = ""
-    CLAUDE_MODEL: str = "claude-3-sonnet-20240229"
+    # APIs - Groq
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama3-8b-8192"
+    GROQ_VISION_MODEL: str = "llama-3.2-11b-vision-preview"
     
     # APIs - VIN Decoder
     VIN_DECODER_API_KEY: str = ""
@@ -42,7 +43,7 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "us-east-1"
-    S3_BUCKET_NAME: str = "autoflow-photos"
+    S3_BUCKET_NAME: str = "swiftval-media"
     
     # Pricing
     DEFAULT_SPREAD_PERCENT: float = 15.0

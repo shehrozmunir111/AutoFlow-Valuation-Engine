@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/autoflow_db
+      - DATABASE_URL=postgresql://postgres:password@db:5432/swiftval_db
       - REDIS_URL=redis://redis:6379
     depends_on:
       - db
@@ -15,7 +15,7 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=autoflow_db
+      - POSTGRES_DB=swiftval_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
     volumes:

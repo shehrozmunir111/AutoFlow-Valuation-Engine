@@ -6,12 +6,12 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-class VINDecoderService:
+class AutoSpecFetcher:
     def __init__(self):
         self.api_key = settings.VIN_DECODER_API_KEY
         self.base_url = settings.VIN_DECODER_URL
     
-    async def decode_vin(self, vin: str) -> Optional[Dict]:
+    async def fetch_specs_by_vin(self, vin: str) -> Optional[Dict]:
         """Decode VIN using external API."""
         try:
             async with httpx.AsyncClient() as client:

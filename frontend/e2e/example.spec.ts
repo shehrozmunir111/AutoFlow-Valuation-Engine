@@ -4,7 +4,7 @@ test('has title and can navigate', async ({ page }) => {
     await page.goto('/');
 
     // Expect a title "to contain" a substring.
-    await expect(page).toHaveTitle(/AutoFlow Valuation Engine/i);
+    await expect(page).toHaveTitle(/SwiftValuation AI/i);
 
     // We can write more sophisticated e2e paths here for the Quote form.
     // For example:

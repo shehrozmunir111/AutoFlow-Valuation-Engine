@@ -1,4 +1,4 @@
-import anthropic
+from groq import Groq
 import json
 import logging
 from typing import Dict
@@ -9,36 +9,36 @@ from app.schemas.quote import QuoteRequest
 
 logger = logging.getLogger(__name__)
 
-class AIClassifier:
+class SmartAssessor:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=settings.CLAUDE_API_KEY)
+        self.client = Groq(api_key=settings.GROQ_API_KEY)
     
-    async def classify_vehicle(self, request: QuoteRequest) -> Dict:
-        # 1. Rules first (free)
-        if request.mileage > 200000 and not request.drivable:
-            return {
-                'classification': 'junk',
-                'confidence': Decimal('0.95'),
-                'reasoning': 'High mileage + non-drivable'
-            }
-        
-        # 2. AI for edge cases
+    async def assess_vehicle_category(self, request: QuoteRequest) -> Dict:
+        # AI for all cases as per user request
         prompt = f"""
         Vehicle: {request.year} {request.make} {request.model}
         Miles: {request.mileage}, Condition: {request.condition_rating}
         Drivable: {request.drivable}, Title: {request.title_status}
         
-        Classify as 'junk' or 'auction'. Return JSON with classification, confidence (0-1), reasoning.
+        Classify as 'junk' or 'auction'. Return ONLY a JSON object with:
+        {{
+            "classification": "junk" | "auction",
+            "confidence": 0.0 to 1.0,
+            "reasoning": "brief explanation"
+        }}
         """
         
         try:
-            response = await self.client.messages.create(
-                model=settings.CLAUDE_MODEL,
-                max_tokens=100,
-                messages=[{"role": "user", "content": prompt}]
+            # Note: Groq's python client for chat completion is synchronous by default in common versions 
+            # or uses different async pattern. For this demo, we'll use the sync client or wrap if needed.
+            # Assuming standard Groq client usage:
+            response = self.client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
             )
             
-            result = json.loads(response.content[0].text)
+            result = json.loads(response.choices[0].message.content)
             return {
                 'classification': result['classification'],
                 'confidence': Decimal(str(result['confidence'])),
@@ -46,7 +46,7 @@ class AIClassifier:
             }
             
         except Exception as e:
-            logger.error(f"AI classification failed: {e}")
+            logger.error(f"Groq assessment failed: {e}")
             return self._rules_fallback(request)
     
     def _rules_fallback(self, request: QuoteRequest) -> Dict:

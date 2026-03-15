@@ -9,6 +9,8 @@ from app.models.photo import QuotePhoto
 
 router = APIRouter()
 
+from app.services.s3_service import S3Service
+
 @router.post("/upload-url")
 async def get_upload_url(
     request: PhotoUploadRequest,
@@ -23,11 +25,12 @@ async def get_upload_url(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     
-    # Mock presigned URL
+    s3 = S3Service()
     key = f"quotes/{request.quote_id}/{request.photo_type}_{uuid.uuid4()}.jpg"
+    upload_url = s3.generate_presigned_url(key)
     
     return {
-        "upload_url": f"https://autoflow-photos.s3.amazonaws.com/{key}?X-Amz-Algorithm=...",
+        "upload_url": upload_url,
         "key": key,
         "expires_in": 3600
     }
@@ -48,11 +51,12 @@ async def confirm_upload(
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     
+    s3 = S3Service()
     photo = QuotePhoto(
         quote_id=quote.id,
         photo_type=photo_type,
         s3_key=s3_key,
-        s3_url=f"https://autoflow-photos.s3.amazonaws.com/{s3_key}"
+        s3_url=s3.get_object_url(s3_key)
     )
     db.add(photo)
     db.commit()
