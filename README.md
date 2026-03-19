@@ -189,11 +189,13 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 6. **Run backend tests**:
 
+It is recommended to run the backend tests as a python module to avoid import path issues:
+
 ```bash
-pytest
+python -m pytest app/tests
 ```
 
-This uses an in memory SQLite database and covers the health check and valuation calculation flow.
+This test suite covers the underlying core logic, data models, validation limits, and valuation rules.
 
 #### 3. Frontend setup (React + Vite)
 
@@ -212,13 +214,21 @@ npm run dev
 
 By default, Vite serves the frontend on `http://localhost:3000` and proxies all `/api` requests to `http://localhost:8000`, so the UI and API work together without additional config.
 
-3. **Run frontend tests**:
+3. **Run frontend testing suites**:
+
+To run the frontend unit tests using Vitest:
 
 ```bash
-npm test
+npm run test
 ```
 
-This runs the Vitest suite (e.g. `App.test.tsx`) to ensure the core UI renders correctly.
+To run the robust End-to-End UI user workflows in a headless browser via Playwright:
+
+```bash
+npm run test:e2e
+```
+
+The Playwright tests will automatically spin up the frontend server and validate the core wizard UI flows.
 
 For basic manual testing:
 

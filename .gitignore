@@ -200,3 +200,9 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Playwright Test Reports
+frontend/playwright-report/
+frontend/test-results/
+playwright-report/
+test-results/

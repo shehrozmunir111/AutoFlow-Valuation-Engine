@@ -2,13 +2,13 @@ import pytest
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from app.services.pricing_engine import PricingEngine
+from app.services.valuation_logic import ValuationLogic
 from app.models.partner import Partner
 from app.models.pricing import PricingRule
 from app.models.vehicle import Vehicle
 from app.schemas.quote import QuoteRequest
 
-def test_pricing_engine_flat_rate(db: Session):
+def test_valuation_logic_flat_rate(db: Session):
     partner = Partner(
         name="Test Junk Yard",
         partner_type="junk",
@@ -27,7 +27,7 @@ def test_pricing_engine_flat_rate(db: Session):
     db.add(rule)
     db.commit()
     
-    engine = PricingEngine(db)
+    engine = ValuationLogic(db)
     request = QuoteRequest(
         year=2010,
         make="Honda",
@@ -39,6 +39,6 @@ def test_pricing_engine_flat_rate(db: Session):
         zip_code="12345"
     )
     
-    result = engine.find_best_price(request)
+    result = engine.calculate_optimal_price(request)
     assert result['final_offer'] is not None
     assert result['calculation_method'] == "flat_rate"
