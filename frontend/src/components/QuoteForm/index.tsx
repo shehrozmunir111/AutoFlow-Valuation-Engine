@@ -36,13 +36,27 @@ const QuoteForm = () => {
     })
 
     const handleNext = async () => {
-        const isValid = await methods.trigger()
-        if (!isValid) return
+        const stepFields: Record<number, any[]> = {
+            0: ['vin', 'year', 'make', 'model', 'mileage', 'title_status'],
+            1: ['condition_rating', 'drivable', 'engine_issues', 'transmission_issues'],
+            2: ['exterior_damage', 'glass_damage', 'wheel_damage'],
+            3: ['interior_damage'],
+            4: ['zip_code', 'city', 'state', 'pickup_address']
+        };
+
+        const isValid = await methods.trigger(stepFields[currentStep]);
+        if (!isValid) return;
 
         if (currentStep === STEPS.length - 2) {
             // Last step before offer - submit
-            const data = methods.getValues()
-            await getQuote(data)
+            const isFullyValid = await methods.trigger();
+            if (!isFullyValid) return;
+
+            const data = methods.getValues();
+            const response = await getQuote(data);
+            if (!response) {
+                return; // Stop if there was an API error, allowing the error box to show
+            }
         }
 
         setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1))
@@ -56,6 +70,16 @@ const QuoteForm = () => {
         methods.reset()
         resetQuote()
         setCurrentStep(0)
+    }
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 bg-white rounded-2xl shadow-xl max-w-2xl mx-auto">
+                 <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+                 <p className="text-xl font-medium text-gray-700">Calculating your instant offer...</p>
+                 <p className="text-gray-500 mt-2 italic text-sm text-center">AI logic is evaluating your vehicle condition and finding the best partner price.</p>
+            </div>
+        )
     }
 
     if (quote) {

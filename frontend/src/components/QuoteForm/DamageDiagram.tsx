@@ -27,7 +27,7 @@ const DamageDiagram = ({ type }: DamageDiagramProps) => {
     const { setValue, watch } = useFormContext()
     const [selectedZone, setSelectedZone] = useState<string | null>(null)
 
-    const fieldName = type === 'exterior' ? 'condition_map_ext' : 'condition_map_int'
+    const fieldName = type === 'exterior' ? 'exterior_damage' : 'interior_damage'
     const currentDamage = watch(fieldName) || []
 
     const zones = type === 'exterior' ? EXTERIOR_ZONES : INTERIOR_ZONES

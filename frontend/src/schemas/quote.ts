@@ -7,15 +7,17 @@ export const damageSelectionSchema = z.object({
 })
 
 export const quoteRequestSchema = z.object({
-    vin: z.string().length(17).optional(),
+    vin: z.string().optional().refine((val) => !val || val.length === 17, {
+        message: "VIN must be exactly 17 characters if provided",
+    }).transform(v => v || undefined),
     year: z.number().min(1900).max(2030),
     make: z.string().min(1),
     model: z.string().min(1),
     trim: z.string().optional(),
     mileage: z.number().min(0),
-    title_status: z.enum(['clean', 'salvage', 'rebuilt', 'junk', 'lien']),
+    title_status: z.enum(['clean', 'salvage', 'rebuilt', 'junk', 'lien']).optional(),
     condition_rating: z.enum(['excellent', 'good', 'fair', 'poor', 'junk']),
-    drivable: z.boolean(),
+    drivable: z.any().transform(val => val === 'true' || val === true),
     engine_issues: z.string().optional(),
     transmission_issues: z.string().optional(),
     exterior_damage: z.array(damageSelectionSchema).optional(),

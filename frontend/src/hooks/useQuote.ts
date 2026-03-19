@@ -16,8 +16,20 @@ export const useQuote = () => {
             setQuote(response)
             return response
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to get quote')
-            return null
+            const rawDetail = err.response?.data?.detail;
+            let errorMessage = 'Failed to get quote';
+            
+            if (typeof rawDetail === 'string') {
+                errorMessage = rawDetail;
+            } else if (Array.isArray(rawDetail)) {
+                // Handle standard FastAPI 422 list
+                errorMessage = rawDetail.map(e => `${e.loc.join('.')}: ${e.msg}`).join('; ');
+            } else if (rawDetail && typeof rawDetail === 'object') {
+                errorMessage = JSON.stringify(rawDetail);
+            }
+            
+            setError(errorMessage);
+            return null;
         } finally {
             setLoading(false)
         }

@@ -39,8 +39,8 @@ async def calculate_quote(
         spread_amount=pricing['spread_amount'],
         final_offer=pricing['final_offer'],
         offer_valid_until=datetime.now() + timedelta(hours=24),
-        condition_map_ext=[d.model_dump() for d in request.condition_map_ext] if request.condition_map_ext else None,
-        condition_map_int=[d.model_dump() for d in request.condition_map_int] if request.condition_map_int else None,
+        condition_map_ext=[d.model_dump() for d in request.exterior_damage] if request.exterior_damage else None,
+        condition_map_int=[d.model_dump() for d in request.interior_damage] if request.interior_damage else None,
         ai_classified=True,
         needs_human_review=classification['confidence'] < 0.7
     )
