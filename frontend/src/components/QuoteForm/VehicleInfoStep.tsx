@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form'
 import { useEffect, useState } from 'react'
 import Input from '../common/Input'
 import Select from '../common/Select'
+import Button from '../common/Button'
 import { getVehicleMakes, getVehicleModels, lookupVIN } from '../../utils/api'
 
 const VehicleInfoStep = () => {
@@ -9,18 +10,53 @@ const VehicleInfoStep = () => {
     const [makes, setMakes] = useState<string[]>([])
     const [models, setModels] = useState<string[]>([])
     const [vinLoading, setVinLoading] = useState(false)
+    const [lookupError, setLookupError] = useState<string | null>(null)
 
     const year = watch('year')
     const make = watch('make')
     const vin = watch('vin')
 
     useEffect(() => {
-        getVehicleMakes(year).then(setMakes)
+        let isMounted = true
+
+        getVehicleMakes(year)
+            .then((data) => {
+                if (isMounted) {
+                    setMakes(data)
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setMakes([])
+                }
+            })
+
+        return () => {
+            isMounted = false
+        }
     }, [year])
 
     useEffect(() => {
+        let isMounted = true
+
         if (make) {
-            getVehicleModels(make, year).then(setModels)
+            getVehicleModels(make, year)
+                .then((data) => {
+                    if (isMounted) {
+                        setModels(data)
+                    }
+                })
+                .catch(() => {
+                    if (isMounted) {
+                        setModels([])
+                    }
+                })
+        } else {
+            setModels([])
+        }
+
+        return () => {
+            isMounted = false
         }
     }, [make, year])
 
@@ -28,11 +64,14 @@ const VehicleInfoStep = () => {
         if (!vin || vin.length !== 17) return
 
         setVinLoading(true)
+        setLookupError(null)
         try {
             const data = await lookupVIN(vin)
             if (data.year) setValue('year', data.year)
             if (data.make) setValue('make', data.make)
             if (data.model) setValue('model', data.model)
+        } catch {
+            setLookupError('VIN lookup is unavailable right now. You can still fill the vehicle details manually.')
         } finally {
             setVinLoading(false)
         }
@@ -57,11 +96,18 @@ const VehicleInfoStep = () => {
                     variant="secondary"
                     onClick={handleVINLookup}
                     isLoading={vinLoading}
+                    disabled={!vin || vin.length !== 17}
                     className="mt-6"
                 >
                     Lookup
                 </Button>
             </div>
+
+            {lookupError && (
+                <div className="rounded-lg bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                    {lookupError}
+                </div>
+            )}
 
             <Select
                 label="Year"
@@ -106,8 +152,5 @@ const VehicleInfoStep = () => {
         </div>
     )
 }
-
-// Button import ke liye
-import Button from '../common/Button'
 
 export default VehicleInfoStep

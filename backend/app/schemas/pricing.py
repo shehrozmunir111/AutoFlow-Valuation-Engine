@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from decimal import Decimal
 from datetime import date
@@ -26,6 +26,5 @@ class PricingRuleResponse(PricingRuleBase):
     id: int
     partner_id: int
     vehicle_id: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)

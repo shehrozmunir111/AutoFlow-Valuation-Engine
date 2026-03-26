@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict
 from decimal import Decimal
 
@@ -13,10 +13,9 @@ class PartnerBase(BaseModel):
 class PartnerCreate(PartnerBase):
     api_credentials: Optional[Dict] = None
     coverage_zips: Optional[List[str]] = None
-    default_spread_percent: Decimal = Field(default=15.0)
+    default_spread_percent: Decimal = Field(default=Decimal("15.0"))
 
 class PartnerResponse(PartnerBase):
     id: int
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes=True)

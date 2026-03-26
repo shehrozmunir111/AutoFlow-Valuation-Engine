@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from app.database import get_db
 from app.schemas.quote import QuoteRequest, QuoteResponse
@@ -30,8 +31,15 @@ async def calculate_quote(
         year=request.year,
         make=request.make,
         model=request.model,
+        title_status=request.title_status,
+        condition_rating=request.condition_rating,
+        drivable=request.drivable,
+        engine_issues=request.engine_issues,
+        transmission_issues=request.transmission_issues,
         mileage=request.mileage,
         zip_code=request.zip_code,
+        city=request.city,
+        state=request.state,
         classification=classification['classification'],
         classification_confidence=classification['confidence'],
         partner_id=pricing['partner_id'],
@@ -42,7 +50,7 @@ async def calculate_quote(
         condition_map_ext=[d.model_dump() for d in request.exterior_damage] if request.exterior_damage else None,
         condition_map_int=[d.model_dump() for d in request.interior_damage] if request.interior_damage else None,
         ai_classified=True,
-        needs_human_review=classification['confidence'] < 0.7
+        needs_human_review=classification['confidence'] < Decimal("0.70")
     )
     
     db.add(quote)

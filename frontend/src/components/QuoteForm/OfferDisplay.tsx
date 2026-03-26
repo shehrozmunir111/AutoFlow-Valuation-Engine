@@ -16,8 +16,8 @@ interface OfferDisplayProps {
 }
 
 const OfferDisplay = ({ quote, onReset }: OfferDisplayProps) => {
-    const validUntil = quote.offer_valid_until ? new Date(quote.offer_valid_until) : new Date();
-    const confidencePct = quote.confidence ? Math.round(Number(quote.confidence) * 100) : 0;
+    const validUntil = quote.offer_valid_until ? new Date(quote.offer_valid_until) : new Date()
+    const confidencePct = quote.confidence ? Math.round(Number(quote.confidence) * 100) : 0
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -25,47 +25,56 @@ const OfferDisplay = ({ quote, onReset }: OfferDisplayProps) => {
                 <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Instant Offer</h2>
 
                 {quote.needs_human_review ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 mb-6 text-center">
-                        <div className="text-4xl mb-4">🔍</div>
-                        <p className="text-yellow-800 text-lg font-medium">
-                            This vehicle needs a quick human review. 
+                    <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-8 text-center">
+                        <div className="mb-4 text-4xl font-semibold text-yellow-900">Review</div>
+                        <p className="text-lg font-medium text-yellow-800">
+                            This vehicle needs a quick human review.
                         </p>
-                        <p className="text-yellow-700 mt-2">
-                             We'll contact you within 24 hours with a guaranteed cash offer.
+                        <p className="mt-2 text-yellow-700">
+                            We&apos;ll contact you within 24 hours with a guaranteed cash offer.
                         </p>
+                        <div className="mt-6">
+                            <Button variant="secondary" onClick={onReset}>
+                                Start Over
+                            </Button>
+                        </div>
                     </div>
                 ) : (
                     <>
                         <div className="mb-8">
-                            <p className="text-gray-600 mb-2">We can offer you</p>
-                            <div className="text-6xl font-bold text-green-600 mb-2 drop-shadow-sm">
+                            <p className="mb-2 text-gray-600">We can offer you</p>
+                            <div className="mb-2 text-6xl font-bold text-green-600 drop-shadow-sm">
                                 {formatCurrency(quote.offer_amount)}
                             </div>
-                            <div className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full font-medium">
+                            <div className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
                                 Category: {quote.classification || 'Vehicle'} ({confidencePct}% confidence)
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 rounded-xl p-6 mb-8 text-left border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="mb-8 grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-gray-50 p-6 text-left sm:grid-cols-2">
                             <div>
-                                <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Quote ID</p>
-                                <p className="text-sm text-gray-700 font-mono bg-white px-2 py-1 rounded border overflow-hidden text-ellipsis">{quote.quote_id || 'N/A'}</p>
+                                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Quote ID</p>
+                                <p className="overflow-hidden text-ellipsis rounded border bg-white px-2 py-1 font-mono text-sm text-gray-700">
+                                    {quote.quote_id || 'N/A'}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Valid Until</p>
+                                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Valid Until</p>
                                 <p className="text-sm text-gray-700">{validUntil.toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Pricing Strategy</p>
-                                <p className="text-sm text-gray-700 capitalize">{quote.calculation_method?.replace('_', ' ') || 'standard'}</p>
+                                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Pricing Strategy</p>
+                                <p className="text-sm capitalize text-gray-700">
+                                    {quote.calculation_method?.replace('_', ' ') || 'standard'}
+                                </p>
                             </div>
-                             <div>
-                                <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Calculation Speed</p>
+                            <div>
+                                <p className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Calculation Speed</p>
                                 <p className="text-sm text-gray-700">{Math.round(quote.query_time_ms || 0)}ms</p>
                             </div>
                         </div>
 
-                        <div className="flex gap-4 justify-center">
+                        <div className="flex justify-center gap-4">
                             <Button variant="primary">Accept Offer</Button>
                             <Button variant="secondary" onClick={onReset}>
                                 Start Over

@@ -14,7 +14,7 @@ class RateLimiter:
         client_ip = request.client.host if request.client else "127.0.0.1"
         now = time.time()
         
-        # Purani entries hatao
+        # Drop timestamps that no longer belong to the active window.
         if client_ip in self.requests:
             self.requests[client_ip] = [
                 ts for ts in self.requests[client_ip] 
@@ -23,7 +23,7 @@ class RateLimiter:
         else:
             self.requests[client_ip] = []
         
-        # Check limit
+        # Reject requests once the current window is exhausted.
         if len(self.requests[client_ip]) >= self.max_requests:
             logger.warning(f"Rate limit exceeded for {client_ip}")
             raise HTTPException(
@@ -31,7 +31,7 @@ class RateLimiter:
                 detail="Too many requests. Please try again later."
             )
         
-        # Request add karo
+        # Record this request in the current window.
         self.requests[client_ip].append(now)
         
         return True

@@ -16,7 +16,7 @@ async def error_handler(request: Request, exc: Exception):
         f"Traceback: {traceback.format_exc()}"
     )
     
-    # Production mein internal details mat dikhao
+    # Avoid leaking internal exception details in API responses.
     return JSONResponse(
         status_code=500,
         content={

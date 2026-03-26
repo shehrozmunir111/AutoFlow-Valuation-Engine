@@ -1,9 +1,10 @@
 from typing import List, Optional, Dict, Any
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func
+from sqlalchemy import or_
 import time
 import logging
+from datetime import datetime
 
 from app.models.partner import Partner
 from app.models.pricing import PricingRule
@@ -150,7 +151,7 @@ class ValuationLogic:
         }
     
     def _fallback_pricing(self, request: QuoteRequest) -> Dict[str, Any]:
-        age = 2024 - request.year
+        age = datetime.now().year - request.year
         base_value = max(500, 5000 - (age * 300))
         
         return {

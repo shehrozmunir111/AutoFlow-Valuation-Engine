@@ -1,8 +1,10 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import List
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env")
+
     # App
     APP_NAME: str = "SwiftValuation AI"
     DEBUG: bool = False
@@ -16,8 +18,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
     
     # Security
-    SECRET_KEY: str = "6b3d8e6a21615a72c7431df8a84d41250394bd3c32ad72e68145443bdf5e0669"
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    SECRET_KEY: str = "change-me-in-production"
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
 
     # Feature flags / demo mode
     MOCK_MODE: bool = False
@@ -48,9 +50,6 @@ class Settings(BaseSettings):
     # Pricing
     DEFAULT_SPREAD_PERCENT: float = 15.0
     
-    class Config:
-        env_file = ".env"
-
 @lru_cache()
 def get_settings():
     return Settings()

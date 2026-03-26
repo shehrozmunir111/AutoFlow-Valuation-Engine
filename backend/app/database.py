@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, event
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from contextlib import contextmanager
 import logging
 
@@ -21,6 +20,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def init_db():
+    # Import models before create_all so all tables are registered.
+    from app import models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
     logger.info("Database initialized")
 

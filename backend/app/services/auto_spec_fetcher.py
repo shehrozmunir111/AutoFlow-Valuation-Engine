@@ -13,6 +13,21 @@ class AutoSpecFetcher:
     
     async def fetch_specs_by_vin(self, vin: str) -> Optional[Dict]:
         """Decode VIN using external API."""
+        if not self.validate_vin(vin):
+            return None
+
+        if settings.MOCK_MODE:
+            return {
+                "year": 2020,
+                "make": "Toyota",
+                "model": "Camry",
+                "trim": "SE",
+                "body_type": "Sedan"
+            }
+
+        if not self.api_key or not self.base_url:
+            return None
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
