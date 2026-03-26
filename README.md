@@ -2,7 +2,7 @@
 
 Full-stack AI-assisted vehicle appraisal and instant offer platform built for modern auto-buying workflows.
 
-![Frontend Wizard](./docs/frontend.png)
+![Frontend Wizard](./docs/GUI.png)
 
 ## Executive Summary
 
