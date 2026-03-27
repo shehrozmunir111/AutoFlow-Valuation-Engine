@@ -205,6 +205,7 @@ Start from [`backend/.env.example`](./backend/.env.example).
 Most important variables:
 
 - `DATABASE_URL`
+- `TEST_DATABASE_URL`
 - `REDIS_URL`
 - `GROQ_API_KEY`
 - `GROQ_MODEL`
@@ -244,6 +245,8 @@ Run backend tests:
 ```bash
 python -m pytest app/tests
 ```
+
+The test suite now uses PostgreSQL as well, through a dedicated test database such as `swiftval_db_test`.
 
 ## Frontend Setup
 
@@ -293,6 +296,7 @@ Interactive docs:
 Current repository verification:
 
 - backend tests passing
+- backend tests running on PostgreSQL
 - frontend type-check passing
 - frontend unit test passing
 - frontend production build passing

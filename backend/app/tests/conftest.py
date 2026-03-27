@@ -1,26 +1,49 @@
+import os
+from urllib.parse import urlparse
+
+import psycopg2
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
-from app.main import app
+from app.config import settings
 from app.database import Base, get_db
+from app.main import app
 
-from app.models.partner import Partner
-from app.models.vehicle import Vehicle
-from app.models.pricing import PricingRule
-from app.models.quote import Quote
-from app.models.photo import QuotePhoto
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+def _default_test_database_url() -> str:
+    parsed = urlparse(settings.DATABASE_URL)
+    db_name = parsed.path.lstrip("/") or "swiftval_db"
+    test_db_name = f"{db_name}_test"
+    return parsed._replace(path=f"/{test_db_name}").geturl()
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", _default_test_database_url())
+
+
+def _ensure_database_exists(database_url: str) -> None:
+    parsed = urlparse(database_url)
+    admin_db = parsed._replace(path="/postgres").geturl()
+    db_name = parsed.path.lstrip("/")
+
+    conn = psycopg2.connect(admin_db)
+    conn.autocommit = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
+            exists = cur.fetchone() is not None
+            if not exists:
+                cur.execute(f'CREATE DATABASE "{db_name}"')
+    finally:
+        conn.close()
+
+
+_ensure_database_exists(TEST_DATABASE_URL)
+
+engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 def override_get_db():
     db = TestingSessionLocal()
@@ -29,13 +52,17 @@ def override_get_db():
     finally:
         db.close()
 
+
 app.dependency_overrides[get_db] = override_get_db
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture(scope="function")
 def db():
@@ -43,11 +70,11 @@ def db():
     try:
         yield db_session
     finally:
-        # We manually empty all tables to ensure clean state
-        for table in reversed(Base.metadata.sorted_tables):
-            db_session.execute(table.delete())
-        db_session.commit()
+        db_session.rollback()
+        with engine.begin() as connection:
+            connection.execute(text("TRUNCATE TABLE quote_photos, quotes, pricing_rules, partners, vehicles RESTART IDENTITY CASCADE"))
         db_session.close()
+
 
 @pytest.fixture(scope="function")
 def client(db):

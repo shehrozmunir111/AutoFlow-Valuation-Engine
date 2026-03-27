@@ -1,124 +1,182 @@
 import os
-import sys
 import random
-from typing import List, Dict
 import string
-import decimal
+import sys
+from decimal import Decimal
+from pathlib import Path
 
-# Make sure the app module can be found
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from sqlalchemy import text
 
-from sqlalchemy.orm import Session
-from app.database import engine, get_db_session
-from app.models.partner import Partner
-from app.models.vehicle import Vehicle
-from app.models.pricing import PricingRule
-from app.database import Base
 
-# Configuration for data generation
-NUM_PARTNERS = 50
-NUM_VEHICLES = 1000
-NUM_PRICING_RULES = 500_000  # Adjust this if it takes too long (500k should be fast with bulk insert)
-CHUNK_SIZE = 10000
+sys.path.append(str(Path(__file__).resolve().parent))
 
-def generate_random_string(length=5):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+from app.database import Base, engine, get_db_session  # noqa: E402
+from app.models.partner import Partner  # noqa: E402
+from app.models.pricing import PricingRule  # noqa: E402
+from app.models.vehicle import Vehicle  # noqa: E402
 
-def generate_zip_code():
+
+NUM_PARTNERS = int(os.getenv("SEED_PARTNERS", "300"))
+NUM_VEHICLES = int(os.getenv("SEED_VEHICLES", "1500"))
+NUM_PRICING_RULES = int(os.getenv("SEED_PRICING_RULES", "75000"))
+CHUNK_SIZE = int(os.getenv("SEED_CHUNK_SIZE", "5000"))
+
+VALID_PARTNER_TYPES = ["junk", "auction", "hybrid"]
+VALID_PRICING_STRUCTURES = ["vehicle_specific", "category_based", "flat_rate", "zip_based"]
+VEHICLE_CATEGORIES = ["sedan", "suv", "truck", "van"]
+MAKES_AND_MODELS = {
+    "Toyota": ["Camry", "Corolla", "RAV4", "Tacoma"],
+    "Honda": ["Civic", "Accord", "CR-V", "Pilot"],
+    "Ford": ["F-150", "Escape", "Explorer", "Fusion"],
+    "Chevrolet": ["Malibu", "Silverado", "Equinox", "Tahoe"],
+    "Nissan": ["Altima", "Sentra", "Rogue", "Frontier"],
+    "Hyundai": ["Elantra", "Sonata", "Tucson", "Santa Fe"],
+    "Kia": ["Forte", "Optima", "Sportage", "Sorento"],
+}
+
+
+def generate_random_string(length: int = 6) -> str:
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
+def generate_zip_code() -> str:
     return f"{random.randint(10000, 99999)}"
 
-def main():
-    print("Creating tables if they don't exist...")
-    Base.metadata.create_all(bind=engine)
-    
-    with get_db_session() as db:
-        print("Checking if data already exists...")
-        if db.query(Partner).count() > 0:
-            print("Data already exists in DB. Truncating data to regenerate or exiting? Auto-exit to prevent data loss.")
-            print("If you want fresh data, delete your SQLite DB or drop tables in PostgreSQL, then run this again.")
-            return
 
-        print(f"Generating {NUM_PARTNERS} Partners...")
-        partners = []
-        for i in range(NUM_PARTNERS):
-            p = Partner(
-                name=f"Partner_Corp_{generate_random_string(6)}",
-                partner_type=random.choice(["auto", "hybrid", "manual"]),
-                pricing_structure_type=random.choice(["vehicle_specific", "category_based", "flat_rate", "zip_based"]),
+def random_decimal(min_value: float, max_value: float, precision: int = 2) -> Decimal:
+    return Decimal(str(round(random.uniform(min_value, max_value), precision)))
+
+
+def build_partners() -> list[Partner]:
+    partners: list[Partner] = []
+    for _ in range(NUM_PARTNERS):
+        pricing_structure_type = random.choice(VALID_PRICING_STRUCTURES)
+        partner_type = random.choice(VALID_PARTNER_TYPES)
+
+        partners.append(
+            Partner(
+                name=f"Partner_{partner_type.upper()}_{generate_random_string()}",
+                partner_type=partner_type,
+                pricing_structure_type=pricing_structure_type,
                 is_active=True,
-                priority_score=random.randint(0, 100),
-                coverage_zips=[generate_zip_code() for _ in range(5)], # Sample zip codes coverage
-                default_spread_percent=decimal.Decimal(str(round(random.uniform(5.0, 25.0), 2)))
+                priority_score=random.randint(10, 100),
+                coverage_zips=[generate_zip_code() for _ in range(random.randint(5, 20))],
+                default_spread_percent=random_decimal(5.0, 22.5),
             )
-            partners.append(p)
-            
-        db.bulk_save_objects(partners)
-        db.commit()
-        
-        # Retrieve partner IDs
-        partner_ids = [p.id for p in db.query(Partner.id).all()]
-        
-        print(f"Generating {NUM_VEHICLES} Vehicles...")
-        vehicles = []
-        makes = ["Toyota", "Ford", "Honda", "Chevrolet", "Nissan", "BMW", "Mercedes-Benz"]
-        for i in range(NUM_VEHICLES):
-            v = Vehicle(
-                year=random.randint(1995, 2024),
-                make=random.choice(makes),
-                model=f"Model_{generate_random_string(4)}",
-                weight_kg=decimal.Decimal(str(random.randint(1000, 3000)))
+        )
+    return partners
+
+
+def build_vehicles() -> list[Vehicle]:
+    vehicles: list[Vehicle] = []
+    for _ in range(NUM_VEHICLES):
+        make = random.choice(list(MAKES_AND_MODELS.keys()))
+        model = random.choice(MAKES_AND_MODELS[make])
+        vehicles.append(
+            Vehicle(
+                year=random.randint(2000, 2025),
+                make=make,
+                model=model,
+                trim=random.choice(["Base", "SE", "Sport", "Limited", "LX", "EX"]),
+                body_type=random.choice(VEHICLE_CATEGORIES),
+                weight_kg=random_decimal(1100, 3200, 0),
             )
-            vehicles.append(v)
-            
-        db.bulk_save_objects(vehicles)
-        db.commit()
-        
-        # Retrieve vehicle IDs
-        vehicle_ids = [v.id for v in db.query(Vehicle.id).all()]
-        
-        print(f"Generating {NUM_PRICING_RULES} Pricing Rules (bulk insert)...")
-        # We use dicts here because `bulk_insert_mappings` is WAY faster than object creation
-        pricing_rules_chunk = []
-        rule_types = ["flat", "vehicle_specific", "category_based", "zip_based"]
-        
-        for i in range(1, NUM_PRICING_RULES + 1):
-            rule_type = random.choice(rule_types)
-            base_price = decimal.Decimal(str(round(random.uniform(100, 5000), 2)))
-            zip_code = generate_zip_code()
-            
-            rule_dict = {
-                "partner_id": random.choice(partner_ids),
-                "rule_type": rule_type,
-                "is_active": True,
+        )
+    return vehicles
+
+
+def build_rule_mapping(partner_id: int, vehicle_ids: list[int]) -> dict:
+    structure = random.choice(VALID_PRICING_STRUCTURES)
+    base_price = random_decimal(250, 6500)
+    zip_code = generate_zip_code()
+
+    rule = {
+        "partner_id": partner_id,
+        "is_active": True,
+        "buyer_spread_percent": random_decimal(5.0, 20.0),
+    }
+
+    if structure == "vehicle_specific":
+        rule.update(
+            {
+                "rule_type": "vehicle_specific",
+                "vehicle_id": random.choice(vehicle_ids),
+                "specific_price": base_price,
                 "base_price": base_price,
             }
-            
-            if rule_type == "vehicle_specific":
-                rule_dict["vehicle_id"] = random.choice(vehicle_ids)
-                rule_dict["specific_price"] = base_price * decimal.Decimal("1.2")
-            elif rule_type == "zip_based":
-                rule_dict["zip_code"] = zip_code
-                rule_dict["zip_prefix"] = zip_code[:3]
-                rule_dict["price_per_ton"] = decimal.Decimal(str(round(random.uniform(50, 200), 2)))
-            elif rule_type == "category_based":
-                rule_dict["vehicle_category"] = random.choice(["sedan", "suv", "truck", "van"])
-                rule_dict["category_price"] = base_price
-                
-            pricing_rules_chunk.append(rule_dict)
-            
+        )
+    elif structure == "category_based":
+        rule.update(
+            {
+                "rule_type": "category",
+                "vehicle_category": random.choice(VEHICLE_CATEGORIES),
+                "category_price": base_price,
+                "base_price": base_price,
+            }
+        )
+    elif structure == "zip_based":
+        rule.update(
+            {
+                "rule_type": "condition_adjustment",
+                "zip_code": zip_code,
+                "zip_prefix": zip_code[:3],
+                "price_per_ton": random_decimal(60, 220),
+                "base_price": base_price,
+            }
+        )
+    else:
+        rule.update(
+            {
+                "rule_type": "flat",
+                "base_price": base_price,
+            }
+        )
+
+    return rule
+
+
+def main() -> None:
+    print("Preparing PostgreSQL schema...")
+    Base.metadata.create_all(bind=engine)
+
+    with get_db_session() as db:
+        print("Resetting existing partner, vehicle, pricing, quote, and photo data...")
+        db.execute(text("TRUNCATE TABLE quote_photos, quotes, pricing_rules, partners, vehicles RESTART IDENTITY CASCADE"))
+        db.commit()
+
+        print(f"Creating {NUM_PARTNERS} partners...")
+        partners = build_partners()
+        db.bulk_save_objects(partners)
+        db.commit()
+        partner_ids = list(db.scalars(text("SELECT id FROM partners")).all())
+
+        print(f"Creating {NUM_VEHICLES} vehicles...")
+        vehicles = build_vehicles()
+        db.bulk_save_objects(vehicles)
+        db.commit()
+        vehicle_ids = list(db.scalars(text("SELECT id FROM vehicles")).all())
+
+        print(f"Creating {NUM_PRICING_RULES} pricing rules in chunks...")
+        chunk: list[dict] = []
+        for i in range(1, NUM_PRICING_RULES + 1):
+            chunk.append(build_rule_mapping(random.choice(partner_ids), vehicle_ids))
+
             if i % CHUNK_SIZE == 0:
-                db.bulk_insert_mappings(PricingRule, pricing_rules_chunk)
+                db.bulk_insert_mappings(PricingRule, chunk)
                 db.commit()
-                pricing_rules_chunk.clear()
-                sys.stdout.write(f"\rInserted {i} / {NUM_PRICING_RULES} rules...")
+                chunk.clear()
+                sys.stdout.write(f"\rInserted {i} / {NUM_PRICING_RULES} pricing rules")
                 sys.stdout.flush()
-                
-        # Insert remaining
-        if pricing_rules_chunk:
-            db.bulk_insert_mappings(PricingRule, pricing_rules_chunk)
+
+        if chunk:
+            db.bulk_insert_mappings(PricingRule, chunk)
             db.commit()
-            
-        print("\nFinished generating all bulk data! You can now test the valuation logic performance.")
+
+        print("\nPostgreSQL bulk seeding complete.")
+        print(f"Partners: {NUM_PARTNERS}")
+        print(f"Vehicles: {NUM_VEHICLES}")
+        print(f"Pricing rules: {NUM_PRICING_RULES}")
+
 
 if __name__ == "__main__":
     main()
