@@ -213,3 +213,10 @@ tracked.txt
 
 # TypeScript Caches
 *.tsbuildinfo
+
+# Smart Context
+smart-context/
+.smart-context/
+prompt.txt
+solution.txt
+SwiftValuation_AI_Project_Analysis_Report.docx
